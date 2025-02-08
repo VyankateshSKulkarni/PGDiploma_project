@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Information Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+       body {
+            background-image: url("{{ url_for('static', filename='images/mob1.jpg') }}");
+            background-size: cover; /* Ensures the image covers the entire viewport */
+            background-repeat: no-repeat; /* Prevents image tiling */
+            background-position: center; /* Centers the image */
+            background-attachment: fixed; /* Fixes the background during scrolling */
+        }
+
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.0);
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            background-image: url("{{ url_for('static', filename='images/mob1.jpg') }}"); /* Path to your image */
+            background-size: cover; /* Ensures the image fills the container */
+            background-repeat: no-repeat; /* Prevents image tiling */
+            background-position: center; /* Centers the image */
+            border-radius: 25px;
+            box-shadow: none; /* Removes shadow to ensure clear background */
+            padding: 40px;
+            margin-top: 50px;
+            margin-bottom: 50px;
+        }
+
+
+        .main-heading {
+            font-family: 'Montserrat', sans-serif;
+            color: #2c3464;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(to right, #168e90, #A1F0F0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            display: none;
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            background: linear-gradient(to right, #900C3F , #f57c00);
+            color: white;
+        }
+
+        .card-header {
+            font-weight: 600;
+            text-align: center;
+            padding: 10px;
+            border-bottom: none;
+        }
+
+        .btn-custom {
+            background-color: #8bc34a;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-color: #689f38;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-overlay"></div>
+    <div class="container">
+        <h1 class="main-heading">📱 Flipkart Mobile Information Hub</h1>
+
+        <!-- Dropdown and Submit Button -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <select id="mobile-select" class="form-select">
+                    <option value="" disabled selected>-- Select a Mobile --</option>
+                    {% for mobile in mobile_names %}
+                    <option value="{{ mobile }}">{{ mobile }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button id="submit-button" class="btn btn-custom w-100">Show Details</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-md-6">
+                <!-- Mobile Features -->
+                <div class="card mb-3">
+                    <div class="card-header">Mobile Features</div>
+                    <div class="card-body">
+                        <p id="mobile-features">Loading...</p>
+                    </div>
+                </div>
+                <!-- Sentiment Scores -->
+                <div class="card mb-3">
+                    <div class="card-header">Mobile Review %</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Positive:</strong>
+                                <span id="positive-score" class="badge bg-success">Loading...</span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Negative:</strong>
+                                <span id="negative-score" class="badge bg-danger">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-md-6">
+                <!-- Mobile Summary -->
+                <div class="card mb-3">
+                    <div class="card-header">Mobile Overall Review</div>
+                    <div class="card-body">
+                        <p id="mobile-summary">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Mobiles Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Recommended Mobiles</div>
+                    <div class="card-body">
+                        <ul id="mobile-recommendations" class="list-group">
+                            <!-- Recommendations will be dynamically added here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("submit-button").addEventListener("click", function () {
+            const mobileSelect = document.getElementById("mobile-select");
+            const selectedMobile = mobileSelect.value;
+
+            if (!selectedMobile) {
+                alert("Please select a mobile!");
+                return;
+            }
+
+            const cards = document.querySelectorAll(".card");
+            cards.forEach(card => {
+                card.style.display = "block";
+            });
+
+            fetch(`/get-mobile-data?mobile=${encodeURIComponent(selectedMobile)}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("mobile-features").textContent = data.features || "No features available.";
+                    document.getElementById("mobile-summary").textContent = data.summary || "No summary available.";
+                    document.getElementById("positive-score").textContent = data.sentiment.Positive || "N/A";
+                    document.getElementById("negative-score").textContent = data.sentiment.Negative || "N/A";
+
+                    const recommendationsList = document.getElementById("mobile-recommendations");
+                    recommendationsList.innerHTML = "";
+                    if (data.recommendations && data.recommendations.length > 0) {
+                        data.recommendations.forEach(mobile => {
+                            const listItem = document.createElement("li");
+                            listItem.classList.add("list-group-item");
+                            const link = document.createElement("a");
+                            link.href = mobile.link;
+                            link.textContent = mobile.name;
+                            link.target = "_blank";
+                            listItem.appendChild(link);
+                            recommendationsList.appendChild(listItem);
+                        });
+                    } else {
+                        recommendationsList.innerHTML = '<li class="list-group-item">No recommendations available.</li>';
+                    }
+                });
+        });
+    </script>
+</body>
+</html>
